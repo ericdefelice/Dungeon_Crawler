@@ -1,7 +1,22 @@
-!assets
-assets/*
-!build
-build/*
+# Don't maintain the asset files (textures, audio, models, etc.)
+assets/*.dds
+assets/textures
+assets/*.bmp
+assets/*.gmd
+assets/*.obj
+assets/*.txt
+assets/*.rar
+assets/*.png
+assets/*.wav
+
+# Don't maintain the build objects/exe
+build/*.map
+build/*.pdb
+build/*.obj
+build/*.exe
+build/*.txt
+build/*.suo
+
 TEMP
 util/*.exe
 util/*.pdb

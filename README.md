@@ -1,12 +1,12 @@
 Dungeon Crawler
 =======
 
-**Dungeon Crawler**: a 3D action RPG/adventure game, built using my Gumshoe game engine.
+Dungeon Crawler is a 3D action RPG/adventure game, built using my Gumshoe game engine.
 It currently only supports Windows and DirectX 11 (I have no porting plans).
 
-The main purpose of the game is to serve as a functional project used to test and build up the engine.
+The main purpose of the game is to serve as a functional project used to test and build up the engine.  The current design is to make a 3D isometric game (in the vein of Diablo), with action RPG elements and some puzzle elements (a la Resident Evil).
 
-My goals *include*:
+My goals include:
 
 * Fully functional 3D game using the custom engine
 * Procedurally generated maps and (maybe) puzzles
