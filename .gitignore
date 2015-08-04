@@ -1,4 +1,6 @@
+!assets
 assets/*
+!build
 build/*
 TEMP
 util/*.exe
