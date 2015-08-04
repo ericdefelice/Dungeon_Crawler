@@ -1,0 +1,106 @@
+/*!
+  @file
+  color_ambient_light.ps
+
+  @brief
+  Color & Ambient light pixel shader.
+
+  @detail
+*/
+
+
+//--------------------------------------------
+// Globals
+//--------------------------------------------
+Texture2D shaderTexture1 : register(t0);
+Texture2D shaderTexture2 : register(t1);
+Texture2D alphaMap : register(t2);
+SamplerState sampleType;
+
+cbuffer LightBuffer
+{
+    float4 ambientColor;
+    float4 diffuseColor;
+    float3 lightDirection;
+	float padding;
+};
+
+cbuffer TextureInfoBuffer
+{
+    bool useAlpha;
+    float3 padding2;
+};
+
+
+//--------------------------------------------
+// Typedefs
+//--------------------------------------------
+struct pixelInput_t
+{
+    float4 position : SV_POSITION;
+    float2 tex : TEXCOORD0;
+	float3 normal : NORMAL;
+    float4 color : COLOR;
+};
+
+
+//--------------------------------------------
+// Pixel Shader Implementation
+//--------------------------------------------
+float4 ColorAmbientLightPixelShader(pixelInput_t input) : SV_TARGET
+{
+	float4 color;
+    float3 lightDir;
+    float lightIntensity;
+    float4 textureColor1;
+    float4 textureColor2;
+    float4 alphaValue;
+    float4 blendColor;
+
+
+	// Set the default output color to the ambient light value for all pixels.
+    color = ambientColor;
+
+	// Invert the light direction for calculations.
+    lightDir = -lightDirection;
+
+    // Calculate the amount of light on this pixel.
+    lightIntensity = saturate(dot(input.normal, lightDir));
+
+    if(lightIntensity > 0.0f)
+    {
+        // Determine the final diffuse color based on the diffuse color and the amount of light intensity.
+        color += (diffuseColor * lightIntensity);
+    }
+
+    // Saturate the final light color.
+    color = saturate(color);
+
+    if(useAlpha)
+    {
+        // Sample the pixel color from the first texture using the sampler at this texture coordinate location.
+        textureColor1 = shaderTexture1.Sample(sampleType, input.tex);
+
+        // Sample the pixel color from the second texture using the sampler at this texture coordinate location.
+        textureColor2 = shaderTexture2.Sample(sampleType, input.tex);
+
+        // Sample the alpha blending value.
+        alphaValue = alphaMap.Sample(sampleType, input.tex);
+        
+        // Alpha blend the two colors together based on the alpha value.
+        blendColor = (alphaValue * textureColor2) + ((1.0 - alphaValue) * textureColor1);
+    }
+    else
+    {
+        // Use the pixel color from the first texture only.
+        blendColor = shaderTexture1.Sample(sampleType, input.tex);
+    }
+
+    // Multiply the texture pixel and the final diffuse color to get the final pixel color result.
+    color = color * blendColor;
+
+    // Combine the color map value into the final color.
+    color = saturate(color * input.color * 2.0f);
+
+    return color;
+}

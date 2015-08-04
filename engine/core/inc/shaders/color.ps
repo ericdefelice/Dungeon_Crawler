@@ -1,0 +1,28 @@
+/*!
+  @file
+  color.ps
+
+  @brief
+  Color pixel shader.
+
+  @detail
+*/
+
+
+//--------------------------------------------
+// Typedefs
+//--------------------------------------------
+struct pixelInput_t
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+
+
+//--------------------------------------------
+// Pixel Shader Implementation
+//--------------------------------------------
+float4 ColorPixelShader(pixelInput_t input) : SV_TARGET
+{
+    return input.color;
+}

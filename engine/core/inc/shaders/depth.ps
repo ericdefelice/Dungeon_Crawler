@@ -1,0 +1,47 @@
+/*!
+  @file
+  depth.ps
+
+  @brief
+  Depth pixel shader.
+
+  @detail
+*/
+
+
+//--------------------------------------------
+// Typedefs
+//--------------------------------------------
+struct pixelInput_t
+{
+    float4 position : SV_POSITION;
+    float4 depthPosition : TEXCOORD0;
+};
+
+
+//--------------------------------------------
+// Pixel Shader Implementation
+//--------------------------------------------
+float4 DepthPixelShader(pixelInput_t input) : SV_TARGET
+{
+    float depthValue;
+    float4 color;
+  
+  
+    // Get the depth value of the pixel by dividing the Z pixel depth by the homogeneous W coordinate.
+    depthValue = input.depthPosition.z / input.depthPosition.w;
+
+    // First 10% of the depth buffer color green.
+    if(depthValue < 0.9f)
+    {
+        color = float4(0.0, 1.0f, 0.0f, 1.0f);
+    }
+  
+    // The remainder of the depth buffer color red.
+    if(depthValue >= 0.9f)
+    {
+        color = float4(1.0, 0.0f, 0.0f, 1.0f);
+    }
+
+  return color;
+}
