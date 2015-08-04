@@ -1,0 +1,6 @@
+assets/*
+build/*
+TEMP
+util/*.exe
+util/*.pdb
+util/*.obj
