@@ -14,7 +14,7 @@
 // Includes
 //--------------------------------------------
 #include "gumshoe_typedefs.h"
-#include "math.h"
+#include <math.h>
 #include <random>
 
 
@@ -110,6 +110,18 @@ operator+=(Vector3_t &v1, Vector3_t v2)
     v1 = v1+v2;
     
     return(v1);
+}
+
+inline Vector3_t
+operator-(Vector3_t A, Vector3_t B)
+{
+    Vector3_t result;
+
+    result.x = A.x-B.x;
+    result.y = A.y-B.y;
+    result.z = A.z-B.z;
+
+    return(result);
 }
 
 inline Vector3_t

@@ -13,4 +13,6 @@ Features to Add
 * add enemy entity
 * add player/enemy collision
 * add attacks and health for entities
+* add material support for floor/walls/etc.
+* improve lighting (only ambient lighting now)
 

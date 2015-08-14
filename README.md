@@ -24,7 +24,7 @@ See [docs/status.md](/docs/status.md).
 
  - What's the plan?
 
-See [docs/milestones.md](/docs/milestones.md). I also plan to keep a list of random ideas here [docs/ideas](/docs/ideas).
+See [docs/milestones.md](/docs/milestones.md). I also plan to keep a list of random ideas here [docs/ideas.md](/docs/ideas.md).
 
 
 Dependencies, Building and Running

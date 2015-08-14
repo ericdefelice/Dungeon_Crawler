@@ -17,9 +17,11 @@
 //--------------------------------------------
 #include "gumshoe_typedefs.h"
 #include "gumshoe_math.h"
+#include "gumshoe_intrinsics.h"
 //#include "physics_aabb.h"
 //#include "physics_movement.h"
 #include "model.h"
+#include "dungeon_world.h"
 
 // MOVEMENT SPEED
 // 0.75 - 1.25 for crouching/walking
@@ -58,13 +60,17 @@ public:
 	void GetPosition(Vector3_t&);
 	void GetRotation(Vector3_t&);
 
-	void Move(ID3D11Device*, uint32, float);
+	void Move(ID3D11Device*, Vector3_t, GameWorld*, float);
 	void Rotate(Vector3_t, float);
 
 	void SetOnGround(bool);
 
 	int GetIndexCount();
 	ID3D11ShaderResourceView* GetTexture();
+
+	// Temporary collision functions
+	// These will be moved into the Physics objects later on
+	bool TestFloorCollision(Vector3_t, Vector3_t, float*);
 
 private:
 	Vector3_t m_position, m_rotation;
@@ -73,10 +79,11 @@ private:
 	bool m_groundDragEn;
 	
 	Model* m_Model;
+	// This should be moved into the collider object later
+	Vector3_t m_aabb;
 
-    //Physics::Movement* m_Movement;
-    //Physics::AABB* m_BoundingBox;
-    //Physics::Collision* m_Collision;
+    //Physics::RigidBody* m_RigidBody;
+    //Physics::Collider* m_Collider;
 };
 
 } // end of namespace Gumshoe

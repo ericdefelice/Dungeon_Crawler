@@ -383,7 +383,7 @@ bool Game::Init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 
 	Vector3_t playerPosition;
 	playerPosition.x = 0.0f;
-	playerPosition.y = 0.0f;
+	playerPosition.y = 1.0f;
 	playerPosition.z = 0.0f;
 
 	m_World->GetUpStairsLocation(playerPosition.x, playerPosition.z);
@@ -610,90 +610,39 @@ bool Game::Frame()
 
 bool Game::HandleInput(float frameTime)
 {
-	bool keyDown, result;
+	bool result;
 	int inputRotX, inputRotY;
-	uint32 rotateBitmask = 0; // {Left, Right, Up, Downs}
-	uint32 moveBitmask = 0;   // {Forward, Backward, Left, Right, Up, Down}
-	                          //  LSB                                 MSB
-
-
-	// Set the frame time for calculating the updated position.
-	// m_Camera->SetFrameTime(frameTime);
+	Vector3_t playerMove = {0.0f, 0.0f, 0.0f};
 
 	// Handle the input.
 	// Use the mouse location for the rotation
 	m_Input->GetMouseMovement(inputRotX, inputRotY);
-	
-	// Check for Left Arrow input for rotate left
-	keyDown = m_Input->IsKeyPressed(DIK_LEFT);
-	if (keyDown)
-	{
-		rotateBitmask = rotateBitmask | 0x01;
-	}
-		
-    // Check for Right Arrow input for rotate right
-	keyDown = m_Input->IsKeyPressed(DIK_RIGHT);
-	if (keyDown)
-	{
-		rotateBitmask = rotateBitmask | 0x02;
-	}
 
-	// Check for Up Arrow input for rotate up
-	keyDown = m_Input->IsKeyPressed(DIK_UP);
-	if (keyDown)
-	{
-		rotateBitmask = rotateBitmask | 0x04;
-	}
+	// TODO(ebd): Update the keyboard/gamepad to use game specific action buttons
+	// instead of using the direct key or gamepad button
+	// For example, mapping jump to space or a-button, then calling m_Input->JumpButton()
+	// Need to add a MapKey() function to the Input class, and have a xml file to describe mappings
 
-	// Check for Down Arrow input for rotate down
-	keyDown = m_Input->IsKeyPressed(DIK_DOWN);
-	if (keyDown)
-	{
-		rotateBitmask = rotateBitmask | 0x08;
-	}
-
-    // Check for W Key input for move forward
-	keyDown = m_Input->IsKeyPressed(DIK_W);
-	if (keyDown)
-	{
-		moveBitmask = moveBitmask | 0x01;
-	}
+	// Check for W Key input for move forward
+	if (m_Input->IsKeyPressed(DIK_W))
+	    playerMove.z += 1.0f;
 
     // Check for S Key input for move backward
-	keyDown = m_Input->IsKeyPressed(DIK_S);
-	if (keyDown)
-	{
-		moveBitmask = moveBitmask | 0x02;
-	}
+	if (m_Input->IsKeyPressed(DIK_S))
+	    playerMove.z -= 1.0f;
 
 	// Check for A Key input for strafe left
-	keyDown = m_Input->IsKeyPressed(DIK_A);
-	if (keyDown)
-	{
-		moveBitmask = moveBitmask | 0x04;
-	}
+	if(m_Input->IsKeyPressed(DIK_A))
+	    playerMove.x -= 1.0f;
 
 	// Check for D Key input for strafe right
-	keyDown = m_Input->IsKeyPressed(DIK_D);
-	if (keyDown)
-	{
-		moveBitmask = moveBitmask | 0x08;
-	}
+	if(m_Input->IsKeyPressed(DIK_D))
+	    playerMove.x += 1.0f;
 
-    // Check for PG_UP input for move up
-	keyDown = m_Input->IsKeyPressedStrobe(DIK_SPACE);
-	if (keyDown)
-	{
-		moveBitmask = moveBitmask | 0x10;
-	}
+	// Check for Jump action
+	if (m_Input->IsKeyPressedStrobe(DIK_SPACE))
+		playerMove.y += 1.0f;
 
-	// Check for PG_DN input for move down
-	keyDown = m_Input->IsKeyPressed(DIK_PGDN);
-	if (keyDown)
-	{
-		moveBitmask = moveBitmask | 0x20;
-	}
-	
 	
     Vector3_t playerPos, playerRot;
 
@@ -702,39 +651,14 @@ bool Game::HandleInput(float frameTime)
     playerRot.z = 0.0f;
 
 	// Move and rotate the player based on inputs.
-	m_Player->Move(m_Direct3DSystem->GetDevice(), moveBitmask, frameTime);
+	m_Player->Move(m_Direct3DSystem->GetDevice(), playerMove, m_World, frameTime);
 	m_Player->Rotate(playerRot, frameTime);
     //m_Player->SetRotation(playerRot);
 
 	// Get the position of the player.
 	m_Player->GetPosition(playerPos);
 	m_Player->GetRotation(playerRot);
-/*
-	// Get the height of the triangle that is directly underneath the player's position.
-	float groundHeight = 0.0f;
-	// TODO(ebd): Do collision within the entity.
 
-	//foundHeight =  m_QuadTree->GetHeightAtPosition(playerPos.x, playerPos.z, groundHeight);
-	//if(foundHeight && (groundHeight > playerPos.y))
-	foundHeight = true;
-
-	if (foundHeight)
-	{
-		// If there was a triangle found where the player is, then move them so they are on the ground.
-		playerPos.y = groundHeight;
-		m_Player->SetPosition(playerPos);
-	}
-*/
-/*	
-	if (foundHeight && (groundHeight == playerPos.y))
-	{
-		m_Player->SetOnGround(true);
-	}
-	else if (foundHeight && (groundHeight < playerPos.y))
-	{
-		m_Player->SetOnGround(false);
-	}
-*/
 	// Set the position of the camera.
 	m_Camera->SetPosition(playerPos.x+3.0f, 10.0f, playerPos.z-3.0f);
 	//m_Camera->SetRotation(playerRot.x, playerRot.y, playerRot.z);

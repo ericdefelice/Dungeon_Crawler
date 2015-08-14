@@ -70,7 +70,8 @@ public:
         SouthWallCap    = (1<<9),
         EastWallCap     = (1<<10),
         WestWallCap     = (1<<11),
-        Doorway         = (1<<12)
+        VertDoorway     = (1<<12),
+        HorizDoorway    = (1<<13)
 	};
 
 private:
@@ -135,6 +136,8 @@ public:
 	void GetWorldSize(int&, int&);
 	void GetUpStairsLocation(float&, float&);
 
+	Gumshoe::Vector3_t GetTileNormal(int, int);
+
 private:
 	bool LoadHeightMap(char*);
 	void ScaleHeightMap();
@@ -158,6 +161,7 @@ private:
 	void AddTileFloorGeometry(uint32, std::vector<gameWorldVertex_t>&, std::vector<unsigned long>&, uint32&);
 	void AddTileWallGeometry(uint32, std::vector<gameWorldVertex_t>&, std::vector<unsigned long>&, uint32&);
 	void AddTileWallCapGeometry(uint32, std::vector<gameWorldVertex_t>&, std::vector<unsigned long>&, uint32&);
+	void AddTileDoorwayGeometry(uint32, std::vector<gameWorldVertex_t>&, std::vector<unsigned long>&, uint32&);
 	
     void CalculateTextureCoordinates();
 	bool LoadTextures(ID3D11Device*, LPCSTR*, LPCSTR*);

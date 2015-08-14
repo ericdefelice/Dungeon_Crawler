@@ -229,6 +229,23 @@ void GameWorld::GetUpStairsLocation(float& xPos, float& zPos)
 }
 
 
+Gumshoe::Vector3_t GameWorld::GetTileNormal(int xPos, int zPos)
+{
+	Gumshoe::Vector3_t tileNormal = {0.0f, 0.0f, 0.0f};
+
+	// Get the tile at the specified location
+	char tile = GetTile(xPos, zPos);
+
+    // Check if the tile is a floor tile
+    if (tile != '.')
+    	tileNormal = {0.0f, 1.0f, 0.0f};
+    //else if (tile == Wall)
+    //	tileNormal = {1.0f, 1.0f, 1.0f};
+
+	return tileNormal;
+}
+
+
 bool GameWorld::LoadHeightMap(char* filename)
 {
 	FILE* filePtr;
@@ -532,18 +549,18 @@ bool GameWorld::GenerateWorld(uint32 worldFloors, int maxFeatures)
 
 		  m_gameWorldGrid[index].geoFeatures = 0;
 
+		  // Get the adjacent tiles
+	      char northTile = GetTile(x, y+1);
+	      char southTile = GetTile(x, y-1);
+	      char eastTile  = GetTile(x+1, y);
+	      char westTile  = GetTile(x-1, y);
+	      char northEastTile = GetTile(x+1, y+1);
+	      char southEastTile = GetTile(x+1, y-1);
+	      char northWestTile = GetTile(x-1, y+1);
+	      char southWestTile = GetTile(x-1, y-1);
+
 		  if (tile == Wall)
           {
-          	// Check to see which way the wall is facing to add normals
-          	char northTile = GetTile(x, y+1);
-          	char southTile = GetTile(x, y-1);
-          	char eastTile  = GetTile(x+1, y);
-          	char westTile  = GetTile(x-1, y);
-          	char northEastTile = GetTile(x+1, y+1);
-          	char southEastTile = GetTile(x+1, y-1);
-          	char northWestTile = GetTile(x-1, y+1);
-          	char southWestTile = GetTile(x-1, y-1);
-
           	// Check each adjacent tile to set the floor features
             if (northWestTile == ' ' || northWestTile == ClosedDoor)
             {
@@ -714,7 +731,10 @@ bool GameWorld::GenerateWorld(uint32 worldFloors, int maxFeatures)
           	m_gameWorldGrid[index].geoFeatures |= NorthEastFloor;
           	m_gameWorldGrid[index].geoFeatures |= SouthWestFloor;
           	m_gameWorldGrid[index].geoFeatures |= SouthEastFloor;
-          	m_gameWorldGrid[index].geoFeatures |= Doorway;
+          	if (northTile == Wall)
+          	    m_gameWorldGrid[index].geoFeatures |= VertDoorway;
+          	else
+          		m_gameWorldGrid[index].geoFeatures |= HorizDoorway;
           	m_gameWorldGrid[index].ny = 1.0f;
           }
           else
@@ -1517,6 +1537,217 @@ void GameWorld::AddTileWallCapGeometry(uint32 tileIndex, std::vector<gameWorldVe
 }
 
 
+void GameWorld::AddTileDoorwayGeometry(uint32 tileIndex, std::vector<gameWorldVertex_t> &vertices,
+	                                   std::vector<unsigned long> &indices, uint32 &index)
+{
+	gameWorldVertex_t currVertex;
+    int j;
+    bool addDoorway = false;
+
+    float xMin = 0.4f;
+    float xMax = 0.4f;
+    float xWidth = 0.2f;
+
+    float zMin = 0.0f;
+    float zMax = 0.0f;
+    float zWidth = 1.0f;
+
+    float xNorm = 0.0f;
+    float zNorm = 0.0f;
+
+    // Check if it is a vertical doorway
+    if (m_gameWorldGrid[tileIndex].geoFeatures & VertDoorway)
+    {
+    	addDoorway = true;
+
+        xMin = 0.4f;
+        xMax = 0.4f;
+        xWidth = 0.2f;
+
+        zMin = 0.0f;
+        zMax = 1.0f;
+        zWidth = 1.0f;
+
+        xNorm = 1.0f;
+        zNorm = 0.0f;
+    }
+    // Check if there is a horizontal doorway
+    else if (m_gameWorldGrid[tileIndex].geoFeatures & HorizDoorway)
+    {
+    	addDoorway = true;
+
+        xMin = 0.0f;
+        xMax = 1.0f;
+        xWidth = 1.0f;
+
+        zMin = 0.4f;
+        zMax = 0.4f;
+        zWidth = 0.2f;
+
+        xNorm = 0.0f;
+        zNorm = 1.0f;
+    }
+    
+    // Add in the doorway if needed
+    if (addDoorway)
+    {
+        // There are 4 sides to the doorway
+        for (j = 0; j < 4; j++)
+	    {
+	        float xOff0 = 0.0f;
+	        float xOff1 = 0.0f;
+	        float yOff0 = 0.0f;
+	        float yOff1 = 0.0f;
+	        float zOff0 = 0.0f;
+	        float zOff1 = 0.0f;
+
+	        float tuOff0 = 0.0f;
+	        float tuOff1 = 0.0f;
+	        float tvOff0 = 0.0f;
+	        float tvOff1 = 0.0f;
+
+	        float xNormPoly = 0.0f;
+            float yNormPoly = 0.0f;
+            float zNormPoly = 0.0f;
+
+	        // The walls are added as follows:
+	        // j = 0 : Up facing wall
+	        // j = 1 : Down facing wall
+	        // j = 2 : West/North facing wall
+	        // j = 3 : East/South facing wall
+            if (j == 0)
+            {
+                xOff0 = xMin;
+            	xOff1 = xMin + xWidth;
+                yOff0 = 3.0f;
+            	yOff1 = 3.0f;
+                zOff0 = zMin;
+            	zOff1 = zMin + zWidth;
+
+            	tuOff0 = xOff0;
+                tuOff1 = xOff1;
+                tvOff0 = zOff0;
+                tvOff1 = zOff1;
+
+            	xNormPoly = 0.0f;
+            	yNormPoly = 1.0f;
+            	zNormPoly = 0.0f;
+            }
+            else if (j == 1)
+            {
+                xOff0 = xMin + xWidth;
+            	xOff1 = xMin;
+                yOff0 = 2.2f;
+            	yOff1 = 2.2f;
+                zOff0 = zMin;
+            	zOff1 = zMin + zWidth;
+
+            	tuOff0 = xOff0;
+                tuOff1 = xOff1;
+                tvOff0 = zOff0;
+                tvOff1 = zOff1;
+
+            	xNormPoly = 0.0f;
+            	yNormPoly = -1.0f;
+            	zNormPoly = 0.0f;
+            }
+            // TODO(ebd): Need to fix the vertical walls for the doorways
+            else if (j == 2)
+            {
+            	xOff0 = xMin;
+            	xOff1 = xMax;
+            	yOff0 = 2.2f;
+            	yOff1 = 3.0f;
+            	zOff0 = zMax;
+            	zOff1 = zMin;
+            	
+                tuOff0 = zOff0;
+                tuOff1 = zOff1;
+                tvOff0 = yOff0 - 2.0f;
+                tvOff1 = yOff1 - 2.0f;
+
+            	xNormPoly = -1.0f * xNorm;
+            	yNormPoly = 0.0f;
+            	zNormPoly = 1.0f * zNorm;
+            }
+            else if (j == 3)
+            {
+            	xOff0 = xMin + xWidth;
+            	xOff1 = xMax + xWidth;
+            	yOff0 = 2.2f;
+            	yOff1 = 3.0f;
+            	zOff0 = zMin + zWidth;
+            	zOff1 = zMax + zWidth;
+            	
+                tuOff0 = zOff0;
+                tuOff1 = zOff1;
+                tvOff0 = yOff0 - 2.0f;
+                tvOff1 = yOff1 - 2.0f;
+                
+            	xNormPoly = 1.0f * xNorm;
+            	yNormPoly = 0.0f;
+            	zNormPoly = -1.0f * zNorm;
+            }
+        
+            // Bottom left corner of tile (vertex 0)
+		    currVertex.position = D3DXVECTOR3(m_gameWorldGrid[tileIndex].x + xOff0, m_gameWorldGrid[tileIndex].y + yOff0, m_gameWorldGrid[tileIndex].z + zOff0);
+		    currVertex.texture = D3DXVECTOR2(m_gameWorldGrid[tileIndex].tu + tuOff0, m_gameWorldGrid[tileIndex].tv - tvOff0);
+		    currVertex.normal = D3DXVECTOR3(xNormPoly, yNormPoly, zNormPoly);
+			currVertex.color = D3DXVECTOR4(m_gameWorldGrid[tileIndex].r, m_gameWorldGrid[tileIndex].g, m_gameWorldGrid[tileIndex].b, 1.0f);
+			vertices.push_back(currVertex);
+		    indices.push_back(index);
+			index++;
+
+			// Top left corner of tile (vertex 0)
+			currVertex.position = D3DXVECTOR3(m_gameWorldGrid[tileIndex].x + xOff0, m_gameWorldGrid[tileIndex].y + yOff0, m_gameWorldGrid[tileIndex].z + zOff1);
+		    currVertex.texture = D3DXVECTOR2(m_gameWorldGrid[tileIndex].tu + tuOff0, m_gameWorldGrid[tileIndex].tv - tvOff1);
+		    currVertex.normal = D3DXVECTOR3(xNormPoly, yNormPoly, zNormPoly);
+			currVertex.color = D3DXVECTOR4(m_gameWorldGrid[tileIndex].r, m_gameWorldGrid[tileIndex].g, m_gameWorldGrid[tileIndex].b, 1.0f);
+			vertices.push_back(currVertex);
+		    indices.push_back(index);
+			index++;
+
+			// Top right corner of tile (vertex 0)
+			currVertex.position = D3DXVECTOR3(m_gameWorldGrid[tileIndex].x + xOff1, m_gameWorldGrid[tileIndex].y + yOff1, m_gameWorldGrid[tileIndex].z + zOff1);
+		    currVertex.texture = D3DXVECTOR2(m_gameWorldGrid[tileIndex].tu + tuOff1, m_gameWorldGrid[tileIndex].tv - tvOff1);
+		    currVertex.normal = D3DXVECTOR3(xNormPoly, yNormPoly, zNormPoly);
+			currVertex.color = D3DXVECTOR4(m_gameWorldGrid[tileIndex].r, m_gameWorldGrid[tileIndex].g, m_gameWorldGrid[tileIndex].b, 1.0f);
+			vertices.push_back(currVertex);
+		    indices.push_back(index);
+			index++;
+
+
+			// Top right corner of tile (vertex 1)
+			currVertex.position = D3DXVECTOR3(m_gameWorldGrid[tileIndex].x + xOff1, m_gameWorldGrid[tileIndex].y + yOff1, m_gameWorldGrid[tileIndex].z + zOff1);
+		    currVertex.texture = D3DXVECTOR2(m_gameWorldGrid[tileIndex].tu + tuOff1, m_gameWorldGrid[tileIndex].tv - tvOff1);
+		    currVertex.normal = D3DXVECTOR3(xNormPoly, yNormPoly, zNormPoly);
+			currVertex.color = D3DXVECTOR4(m_gameWorldGrid[tileIndex].r, m_gameWorldGrid[tileIndex].g, m_gameWorldGrid[tileIndex].b, 1.0f);
+			vertices.push_back(currVertex);
+		    indices.push_back(index);
+			index++;
+
+			// Bottom right corner of tile (vertex 1)
+			currVertex.position = D3DXVECTOR3(m_gameWorldGrid[tileIndex].x + xOff1, m_gameWorldGrid[tileIndex].y + yOff1, m_gameWorldGrid[tileIndex].z + zOff0);
+		    currVertex.texture = D3DXVECTOR2(m_gameWorldGrid[tileIndex].tu + tuOff1, m_gameWorldGrid[tileIndex].tv - tvOff0);
+		    currVertex.normal = D3DXVECTOR3(xNormPoly, yNormPoly, zNormPoly);
+			currVertex.color = D3DXVECTOR4(m_gameWorldGrid[tileIndex].r, m_gameWorldGrid[tileIndex].g, m_gameWorldGrid[tileIndex].b, 1.0f);
+			vertices.push_back(currVertex);
+		    indices.push_back(index);
+			index++;
+
+			// Bottom left corner of tile (vertex 1)
+		    currVertex.position = D3DXVECTOR3(m_gameWorldGrid[tileIndex].x + xOff0, m_gameWorldGrid[tileIndex].y + yOff0, m_gameWorldGrid[tileIndex].z + zOff0);
+		    currVertex.texture = D3DXVECTOR2(m_gameWorldGrid[tileIndex].tu + tuOff0, m_gameWorldGrid[tileIndex].tv - tvOff0);
+		    currVertex.normal = D3DXVECTOR3(xNormPoly, yNormPoly, zNormPoly);
+			currVertex.color = D3DXVECTOR4(m_gameWorldGrid[tileIndex].r, m_gameWorldGrid[tileIndex].g, m_gameWorldGrid[tileIndex].b, 1.0f);
+			vertices.push_back(currVertex);
+		    indices.push_back(index);
+			index++;
+		}
+	}
+}
+
+
 bool GameWorld::InitializeBuffers(ID3D11Device* device)
 {
 	//gameWorldVertex_t* vertices;
@@ -1541,6 +1772,12 @@ bool GameWorld::InitializeBuffers(ID3D11Device* device)
 
         // Then add the wall-cap polygons for the tile
         AddTileWallCapGeometry(i, m_vertices, indices, index);
+
+        // TODO(ebd): Don't add doorway geometry for now.
+        // Need to look at how doorways should be handled from a design perspective later on
+
+        // Finally, add the doorway geometry if needed
+        // AddTileDoorwayGeometry(i, m_vertices, indices, index);
 	}
 	
 	m_vertexCount = (int)m_vertices.size();
@@ -2012,7 +2249,8 @@ bool GameWorld::PlaceObject(char tile)
 	{
 		SetTile(x, y, tile);
 
-		// place one object in one room (optional)
+		// remove that room from the vector so that there is only 1 item per room
+		// TODO(ebd): This method should be changed later on
 		m_rooms.erase(m_rooms.begin() + r);
 
 		return true;
